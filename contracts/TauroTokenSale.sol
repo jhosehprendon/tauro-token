@@ -2,7 +2,7 @@ pragma solidity ^0.5.16;
 import "./TauroToken.sol";
 
 contract TauroTokenSale {
-  address admin;
+  address payable admin;
   TauroToken public tokenContract;
   uint256 public tokenPrice;
   uint256 public tokensSold;
@@ -32,5 +32,15 @@ contract TauroTokenSale {
     tokensSold += _numberOfTokens;
 
     emit Sell(msg.sender, _numberOfTokens);
+  }
+
+  function endSale() public {
+    require(msg.sender == admin, 'Just admin can end token sale');
+
+    // Return all remaining unsold tokens to admin
+    require(tokenContract.transfer(admin, tokenContract.balanceOf(address(this))), 'Return all unsold tokens to admin');
+
+    // Destroy contract
+    selfdestruct(admin);
   }
 }

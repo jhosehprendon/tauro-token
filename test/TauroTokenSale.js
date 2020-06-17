@@ -56,4 +56,25 @@ contract('TauroTokenSale', (accounts) => {
       assert(err.message.includes('revert'), true, 'cannot purchase more tokens than availble in contract sale')
     }
   })
+
+  it('ends token sale', async () => {
+    const tokenSaleInstance = await TauroTokenSale.deployed()
+    const tokenInstance = await TauroToken.deployed()
+
+    try {
+      await tokenSaleInstance.endSale({ from: buyer })
+    } catch(err) {
+      assert(err.message.includes('revert'), true, 'just admin can end the token sale')
+    }
+
+    const result = await tokenSaleInstance.endSale({ from: admin })
+    assert.equal(result.receipt.status, true)
+
+    const balance = await tokenInstance.balanceOf(admin)
+    assert.equal(balance.toNumber(), 999990, 'returns all unsold token to admin')
+
+    // Check token price was reset when selfdestructed
+    const balanceContract = await tokenInstance.balanceOf(tokenSaleInstance.address)
+    assert.equal(balanceContract.toNumber(), 0, 'token sale balance was set to zero')
+  })
 })
